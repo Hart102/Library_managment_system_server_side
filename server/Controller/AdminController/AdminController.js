@@ -37,7 +37,7 @@ const adminAuthentication = () => {
 
 module.exports = {adminAuthentication}
 
-// INSERT INTO `Admin` (`id`, `adminId`) VALUES (NULL, '123')
+// INSERT INTO `Admin` (`id`, `adminId`) VALUES (NULL, '123');
 
 
 
