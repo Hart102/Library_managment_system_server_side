@@ -4,6 +4,7 @@ const session                      = require('express-session')
 const Origin                       = require('./module/AccessOrigin/Origin')
 const AdminController              = require('./Controller/AdminController/AdminController')
 const StudentController            = require('./Controller/StudentController')
+const sq = require('./DataBase/library.db')
 
 const app = express()
 const expDate = 60 * 60 * 1000 * 24; // 1 hour 1 day
@@ -38,7 +39,7 @@ app.get('/api/admin/session', AdminController.adminAuthentication().adminSession
 app.post('/api/register', StudentController.studentFunction().registerStudents)
 app.get('/api/getAllStudents', StudentController.studentFunction().getAllStudents)
 app.get('/api/getSingleStudent', StudentController.studentFunction().getSignleStudent)
-app.post('/api/editStudentData', StudentController.studentFunction().editStudentData)
+app.post('/api/editStudentData', StudentController.studentFunction().editStudentProfile)
 
 
 app.listen(8000, () => console.log('App running on port 8000'))
