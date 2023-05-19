@@ -44,3 +44,5 @@ module.exports = {
 // CREATE TABLE `library`.`users` (`id` INT(11) NOT NULL AUTO_INCREMENT , `fullname` VARCHAR(255) NOT NULL , `regNo` VARCHAR(255) NOT NULL , `department` VARCHAR(255) NOT NULL , `college` VARCHAR(255) NOT NULL , `year` VARCHAR(255) NOT NULL , `email` VARCHAR(255) NOT NULL , `borrowingLimit` VARCHAR(255) NOT NULL , `borrowedBooks` VARCHAR(255) NOT NULL , PRIMARY KEY (`id`)) ENGINE = InnoDB;
 
 
+
+
