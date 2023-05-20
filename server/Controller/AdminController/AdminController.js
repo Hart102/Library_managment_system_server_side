@@ -1,13 +1,10 @@
-const {adminAuth} = require('../../module/Joi/Joi')
-const { SELECT_ADMIN, dbconn } = require('../../module/Query/QueryString')
+const { ObjectId } = require('mongodb');
+const {adminAuth} = require('../../module/Joi/Joi');
+const { db } = require('../NewDataBase/DatabaseConnection');
 
-const getSession = () => {
-    return{
-        
-    }
-}
-const adminAuthentication = () => {
-    const adminSession = (id) => this.id = id
+
+let session;
+const adminAuthentication = () => { // admin loginId = 1234
     return{
         // -----------Admin Login Route-----------
         adminLogin(req, res){
@@ -15,29 +12,41 @@ const adminAuthentication = () => {
             if(error){
                 res.json({error: error.message})
             }else{
-                dbconn.query(SELECT_ADMIN(value.adminId), (error, response) => {
-                    if(!error){
-                        if(response.length < 1){
-                            res.json({error: 'Invalid login credential'})
-                        }else{
-                            // Create Session Here 
-                            req.session.admin = response
-                            return new adminSession(req.session.admin)
-                        }
-                    }else{
-                        res.json({error: error})
-                    }
+                db.collection('admin').findOne({ 
+                    adminId: value.adminId 
+                }).then(result => 
+                {
+                    if(result !== null) return session = req.session.admin = result
+                    return res.json({error: 'Invalid login detail'})
                 })
             }
         },
+
+
         // ------Admin Session------
-        adminSession(req, res){res.json(adminSession)}
+        adminSession(req, res){res.json({success: session})},
+
+        // ------Reset password------
+        resetPassword(req, res) {
+            const { _id, newId } = req.body
+            // db.collection('admin').updateOne({ _id: ObjectId }, { $set: { adminId: newId }})
+            // .then(response => {
+            //     if(response.acknowledged) return res.json({success: "success"})
+            //     res.json({error: 'Cannot change password, please try again!'})
+            // })
+
+            db.collection('admin').findOne({ _id: ObjectId })
+            .then(response => {
+                res.json(response)
+            })
+        }
     }
 }
 
 module.exports = {adminAuthentication}
 
-// INSERT INTO `Admin` (`id`, `adminId`) VALUES (NULL, '123');
+// db.collection('admin').insertOne({ adminId: '1234' }).then(result => console.log(result))
+
 
 
 

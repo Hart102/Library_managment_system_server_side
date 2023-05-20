@@ -3,8 +3,7 @@ const bodyParser                   = require('body-parser')
 const session                      = require('express-session')
 const Origin                       = require('./module/AccessOrigin/Origin')
 const AdminController              = require('./Controller/AdminController/AdminController')
-const StudentController            = require('./Controller/StudentController')
-const sq = require('./DataBase/library.db')
+const membersController            = require('./Controller/membersController')
 
 const app = express()
 const expDate = 60 * 60 * 1000 * 24; // 1 hour 1 day
@@ -31,15 +30,16 @@ app.use(bodyParser.json())
 // -------------Admin Route-------------
 app.post('/api/adminLogin', AdminController.adminAuthentication().adminLogin)
 app.get('/api/admin/session', AdminController.adminAuthentication().adminSession)
+app.post('/api/resetPassword', AdminController.adminAuthentication().resetPassword)
 
 
 
 
 // ------------Student Route------------
-app.post('/api/register', StudentController.studentFunction().registerStudents)
-app.get('/api/getAllStudents', StudentController.studentFunction().getAllStudents)
-app.get('/api/getSingleStudent', StudentController.studentFunction().getSignleStudent)
-app.post('/api/editStudentData', StudentController.studentFunction().editStudentProfile)
+app.post('/api/register', membersController.members().membersResitration)
+app.get('/api/getAllMembers', membersController.members().getAllMembers)
+app.get('/api/getSingleMember', membersController.members().getSignleMember)
+app.post('/api/editMemberProfile', membersController.members().editMembersProfile)
 
 
 app.listen(8000, () => console.log('App running on port 8000'))

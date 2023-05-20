@@ -4,7 +4,7 @@ const adminAuth = Joi.object().keys({
     adminId: Joi.string().required()
 })
 
-const studentRegistrationAuth = Joi.object().keys({
+const memberRegistrationAuth = Joi.object().keys({
     FullName: Joi.string().required(),
     RegNo: Joi.string().required(),
     Department: Joi.string().required(),
@@ -15,5 +15,5 @@ const studentRegistrationAuth = Joi.object().keys({
 
 module.exports = { 
     adminAuth,
-    studentRegistrationAuth
+    memberRegistrationAuth
 }
