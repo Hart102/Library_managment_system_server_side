@@ -28,9 +28,10 @@ app.use(bodyParser.json())
 
 
 // -------------Admin Route-------------
-app.post('/api/adminLogin', AdminController.adminAuthentication().adminLogin)
-app.get('/api/admin/session', AdminController.adminAuthentication().adminSession)
+app.post('/api/adminLogin', AdminController.adminAuthentication().login)
 app.post('/api/resetPassword', AdminController.adminAuthentication().resetPassword)
+app.get('/api/admin/createSession', AdminController.adminAuthentication().createSession)
+app.get('/api/admin/destroySession', AdminController.adminAuthentication().destroySession)
 
 
 

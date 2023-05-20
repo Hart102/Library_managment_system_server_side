@@ -2,11 +2,9 @@ const { MongoClient } = require('mongodb')
 const uri = "mongodb+srv://library:123@cluster0.h2m6wq5.mongodb.net";
 
 const client = new MongoClient(uri)
-
-// Connect to database
 client.connect()
     .then(() => {
-        console.log('Connected Successfully!')
+        console.log('Connected to Mongodb!')
         //Close the database connection
         // console.log('Exiting..')
         // client.close()

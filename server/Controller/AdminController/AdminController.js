@@ -3,52 +3,63 @@ const {adminAuth} = require('../../module/Joi/Joi');
 const { db } = require('../NewDataBase/DatabaseConnection');
 
 
+
 let session;
 const adminAuthentication = () => { // admin loginId = 1234
     return{
-        // -----------Admin Login Route-----------
-        adminLogin(req, res){
+        login(req, res){ // Admin Login Route
             const { error, value } = adminAuth.validate(req.body)
             if(error){
                 res.json({error: error.message})
             }else{
-                db.collection('admin').findOne({ 
-                    adminId: value.adminId 
-                }).then(result => 
+                db.collection('admin').findOne({ loginId: value.loginId }).then(result => 
                 {
-                    if(result !== null) return session = req.session.admin = result
-                    return res.json({error: 'Invalid login detail'})
+                    if(result !== null){
+                        res.json({success: "Success"})
+                        return session = req.session.admin = result
+                    }
+                    return res.json({error: 'Invalid credential'})
                 })
             }
         },
 
 
-        // ------Admin Session------
-        adminSession(req, res){res.json({success: session})},
-
-        // ------Reset password------
-        resetPassword(req, res) {
-            const { _id, newId } = req.body
-            // db.collection('admin').updateOne({ _id: ObjectId }, { $set: { adminId: newId }})
-            // .then(response => {
-            //     if(response.acknowledged) return res.json({success: "success"})
-            //     res.json({error: 'Cannot change password, please try again!'})
-            // })
-
-            db.collection('admin').findOne({ _id: ObjectId })
-            .then(response => {
-                res.json(response)
+        resetPassword(req, res) { // Reset password
+            const { id, loginId } = req.body
+            db.collection('admin').updateOne(
+                { _id: new ObjectId(id) }, 
+                { $set: 
+                    { loginId: loginId }
+                }
+            ).then(result => {
+                if(result.modifiedCount > 0) return res.json({
+                    success: "Password reset successful"
+                })
+                res.json({
+                    error: 'Cannot change password, please try again!'
+                })
             })
-        }
+        },
+
+        createSession(req, res){ //Admin Session
+            session ? res.json({success: session}) : res.json({error: 'No session'})
+        }, 
+
+        destroySession(req, res){ // Admin Logout Route
+            res.json({success: "session destroyed"})
+            req.session.destroy(); return session = '';
+        },
     }
 }
 
 module.exports = {adminAuthentication}
 
-// db.collection('admin').insertOne({ adminId: '1234' }).then(result => console.log(result))
+// db.collection('admin').insertOne({ loginId: '12345' }).then(result => console.log(result))
+// db.collection('admin').deleteMany({}).then(result => console.log(result))
 
 
+// db.collection('admin').findOne({ _id: new ObjectId(id) })
+// .then(response => {
+//     res.json(response)
+// })
 
-
-// // Admin Logout Route
-// // Admin Reset Password
