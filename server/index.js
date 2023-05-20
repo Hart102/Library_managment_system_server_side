@@ -2,8 +2,10 @@ const express                      = require('express')
 const bodyParser                   = require('body-parser')
 const session                      = require('express-session')
 const Origin                       = require('./module/AccessOrigin/Origin')
-const AdminController              = require('./Controller/AdminController/AdminController')
-const membersController            = require('./Controller/membersController')
+
+const ADMINCONTROLLER              = require('./Controller/AdminController/AdminController')
+const MEMBERSCONTROLLER            = require('./Controller/membersController')
+const BOOKSCONTROLLER              = require('./Controller/BooksController/booksController')
 
 const app = express()
 const expDate = 60 * 60 * 1000 * 24; // 1 hour 1 day
@@ -28,19 +30,21 @@ app.use(bodyParser.json())
 
 
 // -------------Admin Route-------------
-app.post('/api/adminLogin', AdminController.adminAuthentication().login)
-app.post('/api/resetPassword', AdminController.adminAuthentication().resetPassword)
-app.get('/api/admin/createSession', AdminController.adminAuthentication().createSession)
-app.get('/api/admin/destroySession', AdminController.adminAuthentication().destroySession)
-
-
+app.post('/api/adminLogin', ADMINCONTROLLER.adminAuthentication().login)
+app.post('/api/resetPassword', ADMINCONTROLLER.adminAuthentication().resetPassword)
+app.get('/api/admin/createSession', ADMINCONTROLLER.adminAuthentication().createSession)
+app.get('/api/admin/destroySession', ADMINCONTROLLER.adminAuthentication().destroySession)
 
 
 // ------------Student Route------------
-app.post('/api/register', membersController.members().membersResitration)
-app.get('/api/getAllMembers', membersController.members().getAllMembers)
-app.get('/api/getSingleMember', membersController.members().getSignleMember)
-app.post('/api/editMemberProfile', membersController.members().editMembersProfile)
+app.post('/api/register', MEMBERSCONTROLLER.members().membersResitration)
+app.get('/api/getAllMembers', MEMBERSCONTROLLER.members().getAllMembers)
+app.get('/api/getSingleMember', MEMBERSCONTROLLER.members().getSignleMember)
+app.post('/api/editMemberProfile', MEMBERSCONTROLLER.members().editMembersProfile)
+
+
+// ---------Book controller Route--------- 
+app.get('/api/lendBooks', BOOKSCONTROLLER.lend_book_function().lend_books)
 
 
 app.listen(8000, () => console.log('App running on port 8000'))

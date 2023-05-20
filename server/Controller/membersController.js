@@ -38,7 +38,7 @@ const members = () => {
 
         // ---------------Fetch Single member By Registration number---------------
         getSignleMember(req, res){ 
-            db.collection('members').findOne({RegNo: req.body.regNo}).then(result => 
+            db.collection('members').findOne({RegNo: req.body.RegNo}).then(result => 
             {
                 if(result) return res.json({success: result})
                 res.json({error: "Member not found"})
