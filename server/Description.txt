@@ -1,0 +1,13 @@
+# Library managment system server side
+This is a final year school project.
+
+# Aim of this project
+This application should be able to keep record of the total number of books in the library
+Ability to categorise books
+Registration of members by the libarian
+Lend books to members
+Keep track of members who are in possession of any book
+Update member record when he/she returns book
+Make sure that members don't execed their borrowing limit
+Allow member to login and search for avaliable books
+Allow libarian to view a members profile.
