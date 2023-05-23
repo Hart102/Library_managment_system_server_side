@@ -27,10 +27,7 @@ const adminAuthentication = () => { // admin loginId = 1234
         resetPassword(req, res) { // Reset password
             const { id, loginId } = req.body
             db.collection('admin').updateOne(
-                { _id: new ObjectId(id) }, 
-                { $set: 
-                    { loginId: loginId }
-                }
+                { _id: new ObjectId(id) }, { $set: { loginId: loginId } }
             ).then(result => {
                 if(result.modifiedCount > 0) return res.json({
                     success: "Password reset successful"
