@@ -5,7 +5,8 @@ const Origin                       = require('./module/AccessOrigin/Origin')
 
 const ADMINCONTROLLER              = require('./Controller/AdminController/AdminController')
 const MEMBERSCONTROLLER            = require('./Controller/membersController')
-const BOOKSCONTROLLER              = require('./Controller/BooksController/booksController')
+// const BOOKSCONTROLLER              = require('./Controller/BooksController/booksController')
+const BOOKSCONTROLLER = require('./Controller/BooksController/booksController')
 
 const app = express()
 const expDate = 60 * 60 * 1000 * 24; // 1 hour 1 day
@@ -44,7 +45,8 @@ app.post('/api/editMemberProfile', MEMBERSCONTROLLER.members().editMembersProfil
 
 
 // ---------Book controller Route--------- 
-app.get('/api/lendBooks', BOOKSCONTROLLER.lend_book_function().lend_books)
+app.get('/api/lendBooks', BOOKSCONTROLLER.lend_books)
+app.post('/api/registerBooks', BOOKSCONTROLLER.registerBooks)
 
 
 app.listen(8000, () => console.log('App running on port 8000'))

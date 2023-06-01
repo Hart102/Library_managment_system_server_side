@@ -69,8 +69,8 @@ const members = () => {
                     College: College,
                     YearOfGraduation: YearOfGraduation,
                     Email: Email, 
-                    borrowing_limit: borrowing_limit, 
-                    borrowed_books: borrowed_books 
+                    borrowing_limit: Number(borrowing_limit), 
+                    borrowed_books: [] 
                 } 
             }).then(result => 
             {
@@ -92,9 +92,6 @@ module.exports = {members}
 
 
 
-// mongodb connection string 
-
-// mongodb+srv://library:<123>@cluster0.h2m6wq5.mongodb.net/
 
 
 
