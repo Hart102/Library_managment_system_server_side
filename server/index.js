@@ -45,8 +45,11 @@ app.post('/api/editMemberProfile', MEMBERSCONTROLLER.members().editMembersProfil
 
 
 // ---------Book controller Route--------- 
-app.get('/api/lendBooks', BOOKSCONTROLLER.lend_books)
+app.post('/api/lendBooks', BOOKSCONTROLLER.lend_books)
 app.post('/api/registerBooks', BOOKSCONTROLLER.registerBooks)
+app.post('/api/returnBooks', BOOKSCONTROLLER.returnBooks)
+app.get('/api/getAllBooks', BOOKSCONTROLLER.getAllBook)
+app.post('/api/deleteBook', BOOKSCONTROLLER.deleteBook)
 
 
 app.listen(8000, () => console.log('App running on port 8000'))
