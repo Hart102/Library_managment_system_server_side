@@ -43,6 +43,8 @@ const borrowedDate = () => {
     return date
 }
 
+
+
 const registerBooks = (req, res) => { // Book registration
     const Book = {...book, borrowed: borrowedDate(), returningDate: '1-5-2023'}
 
@@ -56,8 +58,18 @@ const registerBooks = (req, res) => { // Book registration
 
 
 
+/*
+    LEND OR BORROW BOOK FUNCTION
 
-const lend_books = (req, res) => { // Lend book function
+    FEATURES:
+
+    1) This route check if the a member have gotten to his/her borrowing limit
+    before it borrows book to members. 
+    2) Check if member already have the requested book in his/her custody.
+    3)It adds book requested by a member to the member's borrowing record,
+    and also reduces the total number of that particular book the member borrowed. 
+*/
+const lend_books = (req, res) => {
     const { regNo, bookId } = req.body
     try {
         db.collection('members').findOne({ RegNo: regNo }).then(member => 
@@ -65,34 +77,28 @@ const lend_books = (req, res) => { // Lend book function
             if(member){ 
                 db.collection('books').findOne({ _id: new ObjectId(bookId) }).then(book => 
                 {
-                    if(member.borrowing_limit > 3) { // check borrowing limit
+                    if(member.borrowed_books.length > 3) { // check borrowing limit
                         res.json({status: "you've reached your borrowing limit!"})
-                        return
-                    }
-                    
-                    let reduceBook = book.quantity - 1;
-
-                    let checkBorrowedBooks = member.borrowed_books.find(bookObject => bookObject._id == bookId)
-    
-                    if(checkBorrowedBooks){
-                        res.json({msg: 'Book already in your possession'});
                     }else{
-                        member.borrowed_books.push(book)
-                        /* Update member borrowing list */
-                        db.collection('members').replaceOne({ RegNo: regNo }, member).then(result => { 
-                            /*
-                            Reduce the number of books when someone borrows book 
-                            */
-                            if(result.modifiedCount > 0) {
-                                db.collection('books').updateOne(
-                                    { _id: new ObjectId(bookId) }, { $set: { quantity: reduceBook } }
-                                ).then(book => 
-                                {
-                                    if (book.modifiedCount > 0) return res.json({success: "Book successfully borrowed."})
-                                    res.json({error: 'Book not borrowed try again.'})
-                                })
-                            }
-                        }).catch(err => res.json({error: errMsg}));
+                        // Check if member already have the requested book in his/her custody.
+                        let checkBorrowedBooks = member.borrowed_books.find(bookObject => bookObject._id == bookId)
+                        if(checkBorrowedBooks){
+                            res.json({msg: 'Book already in your custody'});
+                        }else{
+                            member.borrowed_books.push(book) //Update member borrowing list
+                            db.collection('members').replaceOne({ RegNo: regNo }, member).then(result => 
+                            {
+                                if(result.modifiedCount > 0) {
+                                    db.collection('books').updateOne( // Reduce the total number of books
+                                        { _id: new ObjectId(bookId) }, { $inc: { quantity: -1 } }
+                                    ).then(book => 
+                                    {
+                                        if (book.modifiedCount > 0) return res.json({success: "Book successfully borrowed."})
+                                        res.json({error: 'Book not borrowed try again.'})
+                                    })
+                                }
+                            }).catch(err => res.json({error: errMsg}));
+                        }
                     }
                 }).catch(err => res.json({error: errMsg}));
             }
@@ -103,50 +109,49 @@ const lend_books = (req, res) => { // Lend book function
 }
 
 
-const returnBooks = (req, res) => { // Return book
-    const { regNo, BookId } = req.body
+/*
+    RETURN BOOK FUNCTION
+    This route removes the book returned by a member from the members borrowing record
+    and also increase the total number of that particular book the member returned. 
+*/
+const returnBooks = (req, res) => { 
+    const { regNo, bookId } = req.body
     try {
         db.collection('members').findOne({ RegNo: regNo }).then(member => 
         {
-            if(member){
-                /* Update members record, when memeber returns book */
-                member.borrowed_books.splice(member.borrowed_books.findIndex(book => book.id === BookId) , 1)
-                db.collection('members').updateOne( 
-                    { RegNo: regNo }, { $set: { borrowed_books: member.borrowed_books } }
-                ).then(response => 
-                {
-                    const Book = member.borrowed_books.find(book => book.id === BookId)
-                    let increaseBook = Book.quantity + 1;
+            if(member){ // Removing book from user history
+                if(member.borrowed_books.length < 1){
+                    res.json({error: "No book in member's custody"})
 
-                    if(response){
-                        /* Increase the number of books when someone borrows book */
-
-                        db.collection('books').updateOne(
-                            { _id: new ObjectId(bookId) }, { $set: { quantity: increaseBook } }
-                        ).then(result => 
-                        {
-                            console.log(result)
-                            // if(response.modifiedCount > 0){
-                            //     return res.json({
-                            //         success: `${member.FullName}, thank you for returning the book in your possession`
-                            //     });
-                            // }
-                        })
-                        // return;
-                    }else{
-                        res.json({error: 'Book not found in user record!'});
-                    }
-                }).catch(err => res.json({error: err}));
+                }else{
+                    member.borrowed_books.splice(member.borrowed_books.findIndex(book => book.id === bookId) , 1);
     
-            }else{
-                res.json({error: 'User not found!'})
-            }
-        }).catch(err => res.json({error: err}));
-    } catch (error) {
-        res.json({error: error})
-    }
+                    db.collection('members').updateOne(
+                        { RegNo: regNo }, { $set: { borrowed_books: member.borrowed_books } }
+                    )
+                    .then(response => {
+                        if(response.modifiedCount > 0){
+    
+                            db.collection('books').updateOne(
+                                { _id: new ObjectId(bookId) }, { $inc: { 'quantity' : 1 } },
+                            ).then(response => 
+                            {
+                                if(response.modifiedCount > 0){
+                                    return res.json({
+                                        success: `${member.FullName}, thank you for returning the book in your custody`
+                                    });
+                                }
+                            }).catch(err => res.json({error: errMsg}));
+                        }
+                    }).catch(err => res.json({error: errMsg}));
+                }
+            }else{res.json({error: 'Member not found!'})}
+
+        }).catch(err => res.json({error: errMsg}));
+    } catch (error) {res.json({error: SERVER_ERROR})}
 }
   
+
 
 const getAllBook = (req, res) => { // Get all books
     try {
@@ -155,10 +160,9 @@ const getAllBook = (req, res) => { // Get all books
             if(books.length > 0) return res.json({success: books});
             res.json({error: 'No book found!'});
         }).catch(err => res.json({error: errMsg}));
-    } catch (error) {
-        res.json({error: SERVER_ERROR})
-    }   
+    } catch (error) {res.json({error: SERVER_ERROR})}   
 }
+
 
 const deleteBook = (req, res) => { // Delete Book
     db.collection('books').deleteOne({ _id: new ObjectId(req.body.Id) }).then(response => {
