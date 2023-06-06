@@ -192,4 +192,3 @@ module.exports = {
 // }).toArray().then(result => result.length > 0 ? res.json({success: result}) : res.json({error: 'no result found!'})
 // ).catch(err => res.json({error: errMsg}))
 
-
