@@ -5,31 +5,31 @@ const { ObjectId } = require('mongodb');
 // Book Id: 64790191a0add8b7258559b2
 
 
-class BookObect {
-    constructor(publishers, title, edition, publishDate, pages, description, category, cover, quantity,) {
-        this.publishers = publishers
-        this.title = title
-        this.edition = edition
-        this.publishDate = publishDate
-        this.pages = pages
-        this.description = description
-        this.category = category
-        this.cover = cover
-        this.quantity = quantity
-    }
-}
+// class BookObect {
+//     constructor(publishers, title, edition, publishDate, pages, description, category, cover, quantity,) {
+//         this.publishers = publishers
+//         this.title = title
+//         this.edition = edition
+//         this.publishDate = publishDate
+//         this.pages = pages
+//         this.description = description
+//         this.category = category
+//         this.cover = cover
+//         this.quantity = quantity
+//     }
+// }
  
-let book = new BookObect(
-    ['Mr. Kelvin'],
-    'science',
-    'An edition of Fantastic Mr Fox (1970)',
-    'October 1, 1950',
-    '96',
-    'The main character of Fantastic Mr. Fox is an extremely clever anthropomorphized fox named Mr. Fox. He lives with his wife and four little foxes. In order to feed his family, he steals food from the cruel, brutish farmers named Boggis, Bunce, and Bean every night.',
-    'science and technology',
-    'coverImage.png',
-    30,
-)
+// let book = new BookObect(
+//     ['Mr. Kelvin'],
+//     'science',
+//     'An edition of Fantastic Mr Fox (1970)',
+//     'October 1, 1950',
+//     '96',
+//     'The main character of Fantastic Mr. Fox is an extremely clever anthropomorphized fox named Mr. Fox. He lives with his wife and four little foxes. In order to feed his family, he steals food from the cruel, brutish farmers named Boggis, Bunce, and Bean every night.',
+//     'science and technology',
+//     'coverImage.png',
+//     30,
+// )
 
 const errMsg = 'please something went wrong.';
 const SERVER_ERROR = 'Server Error!'
@@ -45,9 +45,8 @@ const borrowedDate = () => {
 
 
 
-const registerBooks = (req, res) => { // Book registration
+const registerBooks = (req, res) => { // Book registration route
     const Book = {...book, borrowed: borrowedDate(), returningDate: '1-5-2023'}
-
     db.collection('books').insertOne(Book).then(result => 
     {
         if(result.acknowledged)
@@ -191,4 +190,6 @@ module.exports = {
 //     "$or": [ { "title": data }, { "category": data } ]
 // }).toArray().then(result => result.length > 0 ? res.json({success: result}) : res.json({error: 'no result found!'})
 // ).catch(err => res.json({error: errMsg}))
+
+
 
