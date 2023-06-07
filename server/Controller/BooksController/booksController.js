@@ -44,8 +44,9 @@ const borrowedDate = () => {
 }
 
 
-
-const registerBooks = (req, res) => { // Book registration route
+// Book registration route
+const registerBooks = (req, res) => 
+{
     const Book = {...book, borrowed: borrowedDate(), returningDate: '1-5-2023'}
     db.collection('books').insertOne(Book).then(result => 
     {
@@ -151,8 +152,9 @@ const returnBooks = (req, res) => {
 }
   
 
-
-const getAllBook = (req, res) => { // Get all books
+// Get all books from database
+const getAllBook = (req, res) => 
+{
     try {
         db.collection('books').find({}).toArray().then(books => 
         {
@@ -163,10 +165,57 @@ const getAllBook = (req, res) => { // Get all books
 }
 
 
-const deleteBook = (req, res) => { // Delete Book
-    db.collection('books').deleteOne({ _id: new ObjectId(req.body.Id) }).then(response => {
-        if(response.modifiedCount > 0) return res.json({success: 'Book deleted'})
-    }).catch(err => res.json({error: errMsg}));
+// Delete book from database
+const deleteBook = (req, res) => 
+{
+    // return res.json(req.body)
+    db.collection('books').deleteOne({ _id: new ObjectId(req.body.Id) }).then(response => 
+    {
+        res.json(response)
+    })
+    // db.collection('books').deleteOne({ _id: new ObjectId(req.body.Id) }).then(response => 
+    // {
+    //     // return res.json(response)
+    //     if(response.modifiedCount > 0) return res.json({success: 'Book deleted'});
+    //     res.json({error: SERVER_ERROR});
+    // }).catch(err => res.json({error: errMsg}));
+}
+
+
+
+// Edit book 
+const editBook = (req, res) => 
+{
+    const { bookId, publishers, title, edition,
+        publishDate, pages, description, category, 
+        cover, quantity
+    } = req.body;
+
+    const value = req.body
+
+    db.collection('books').updateOne(
+        { _id: new ObjectId(bookId) },
+        { $set: 
+            {
+                publishers: publishers,
+                title: title,
+                edition: edition,
+                publishDate: publishDate,
+                pages: pages,
+                description: description,
+                category: category,
+                cover: cover,
+                quantity: Number(quantity)
+            }
+        }
+    ).then(response => 
+    {
+        if(response.modifiedCount > 0){
+            res.json({newObject: response})
+        }
+    })
+    
+    // .catch(err => res.json({error: SERVER_ERROR}));
 }
 
 
@@ -182,7 +231,8 @@ module.exports = {
     registerBooks,
     returnBooks,
     getAllBook,
-    deleteBook
+    deleteBook,
+    editBook
 }
 
 // Best function for searching books either by using the title or category

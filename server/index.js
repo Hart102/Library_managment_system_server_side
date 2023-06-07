@@ -50,6 +50,8 @@ app.post('/api/registerBooks', BOOKSCONTROLLER.registerBooks)
 app.post('/api/returnBooks', BOOKSCONTROLLER.returnBooks)
 app.get('/api/getAllBooks', BOOKSCONTROLLER.getAllBook)
 app.post('/api/deleteBook', BOOKSCONTROLLER.deleteBook)
+app.post('/api/editBook', BOOKSCONTROLLER.editBook)
+
 
 
 app.listen(8000, () => console.log('App running on port 8000'))
