@@ -31,10 +31,10 @@ const { ObjectId } = require('mongodb');
 //     30,
 // )
 
-const errMsg = 'please something went wrong.';
+const errMsg = 'Something went wrong please try again.';
 const SERVER_ERROR = 'Server Error!'
 
-const borrowedDate = () => {
+const borrowed_date = () => {
     let objectDate = new Date();
     let day = objectDate.getDate();
     let month = objectDate.getMonth();
@@ -44,16 +44,34 @@ const borrowedDate = () => {
 }
 
 
+
+
 // Book registration route
 const registerBooks = (req, res) => 
 {
-    const Book = {...book, borrowed: borrowedDate(), returningDate: '1-5-2023'}
-    db.collection('books').insertOne(Book).then(result => 
+    db.collection('books').insertOne(req.body).then(result => 
     {
         if(result.acknowledged)
-            return res.json({ success: 'registration successful' });
-        res.json({ error: 'book not registered try again!' });
+            return res.json({ success: 'Registration successful' });
+        res.json({ error: 'Book not registered try again!' });
     }).catch(err => res.json({error: errMsg}));
+}
+
+
+
+
+
+
+const assignKeyValueToObject = (obj, key, value) => {
+    obj[key] = value;
+    return obj;
+}
+
+
+const findObjectById = (array, id) => {
+    if(array && id){
+        return array.find(object => object.id === id);
+    }
 }
 
 
@@ -70,37 +88,46 @@ const registerBooks = (req, res) =>
     and also reduces the total number of that particular book the member borrowed. 
 */
 const lend_books = (req, res) => {
-    const { regNo, bookId } = req.body
     try {
+        const { regNo, bookId, bookReturningDate } = req.body
+
         db.collection('members').findOne({ RegNo: regNo }).then(member => 
         {
-            if(member){ 
-                db.collection('books').findOne({ _id: new ObjectId(bookId) }).then(book => 
-                {
-                    if(member.borrowed_books.length > 3) { // check borrowing limit
-                        res.json({status: "you've reached your borrowing limit!"})
+            if(member){
+                if(member.borrowed_books.length > 3) { // check borrowing limit
+                    res.json({error: "you've reached your borrowing limit!"})
+
+                }else{
+                    const findBookInMembersRecord = findObjectById(member.borrowed_books, bookId);
+                    if(findBookInMembersRecord){
+                        res.json({msg: 'Book already in your custody'});
+
                     }else{
-                        // Check if member already have the requested book in his/her custody.
-                        let checkBorrowedBooks = member.borrowed_books.find(bookObject => bookObject._id == bookId)
-                        if(checkBorrowedBooks){
-                            res.json({msg: 'Book already in your custody'});
-                        }else{
-                            member.borrowed_books.push(book) //Update member borrowing list
-                            db.collection('members').replaceOne({ RegNo: regNo }, member).then(result => 
-                            {
-                                if(result.modifiedCount > 0) {
-                                    db.collection('books').updateOne( // Reduce the total number of books
-                                        { _id: new ObjectId(bookId) }, { $inc: { quantity: -1 } }
-                                    ).then(book => 
-                                    {
-                                        if (book.modifiedCount > 0) return res.json({success: "Book successfully borrowed."})
-                                        res.json({error: 'Book not borrowed try again.'})
-                                    })
-                                }
-                            }).catch(err => res.json({error: errMsg}));
-                        }
+                        db.collection('books').findOne({ _id: new ObjectId(bookId) }).then(book => 
+                        {
+                            if(book){
+                                book = assignKeyValueToObject(book, 'borrowedDate', borrowed_date()), 
+                                assignKeyValueToObject(book, 'bookReturningDate', bookReturningDate);
+
+                                member.borrowed_books.push(book) //Update member borrowing list
+                                db.collection('members').replaceOne({ RegNo: regNo }, member).then(result => 
+                                {
+                                    if(result.modifiedCount > 0) {
+                                        // Reduce the total number of books in the database
+                                        db.collection('books').updateOne( { _id: new ObjectId(bookId) }, { $inc: { totalNumber: -1 } }).then(book => 
+                                        {
+                                            if (book.modifiedCount > 0) return res.json({success: "Book successfully borrowed."})
+                                            res.json({error: 'Book not borrowed try again.'})
+                                        })
+                                    }
+                                }).catch(err => res.json({error: errMsg}));
+
+                            }else{
+                                res.json({error: 'book not found'});
+                            }                         
+                        }).catch(err => res.json({error: errMsg}));
                     }
-                }).catch(err => res.json({error: errMsg}));
+                }
             }
         }).catch(err => res.json({error: errMsg}));
     } catch (error) {
@@ -126,15 +153,10 @@ const returnBooks = (req, res) => {
                 }else{
                     member.borrowed_books.splice(member.borrowed_books.findIndex(book => book.id === bookId) , 1);
     
-                    db.collection('members').updateOne(
-                        { RegNo: regNo }, { $set: { borrowed_books: member.borrowed_books } }
-                    )
-                    .then(response => {
+                    db.collection('members').updateOne({ RegNo: regNo }, { $set: { borrowed_books: member.borrowed_books } }).then(response => 
+                    {
                         if(response.modifiedCount > 0){
-    
-                            db.collection('books').updateOne(
-                                { _id: new ObjectId(bookId) }, { $inc: { 'quantity' : 1 } },
-                            ).then(response => 
+                            db.collection('books').updateOne({ _id: new ObjectId(bookId) }, { $inc: { 'totalNumber' : 1 } }).then(response => 
                             {
                                 if(response.modifiedCount > 0){
                                     return res.json({
@@ -166,19 +188,12 @@ const getAllBook = (req, res) =>
 
 
 // Delete book from database
-const deleteBook = (req, res) => 
+const deleteBook = (req, res) =>
 {
-    // return res.json(req.body)
-    db.collection('books').deleteOne({ _id: new ObjectId(req.body.Id) }).then(response => 
+    db.collection('books').deleteOne({ _id: new ObjectId(req.body.bookId)}).then(response => 
     {
-        res.json(response)
-    })
-    // db.collection('books').deleteOne({ _id: new ObjectId(req.body.Id) }).then(response => 
-    // {
-    //     // return res.json(response)
-    //     if(response.modifiedCount > 0) return res.json({success: 'Book deleted'});
-    //     res.json({error: SERVER_ERROR});
-    // }).catch(err => res.json({error: errMsg}));
+        if(response.deletedCount > 0) return res.json({success: "Book deleted"})
+    }).catch(err => res.json({error: errMsg}));
 }
 
 
@@ -186,36 +201,37 @@ const deleteBook = (req, res) =>
 // Edit book 
 const editBook = (req, res) => 
 {
-    const { bookId, publishers, title, edition,
-        publishDate, pages, description, category, 
-        cover, quantity
-    } = req.body;
-
-    const value = req.body
-
-    db.collection('books').updateOne(
-        { _id: new ObjectId(bookId) },
-        { $set: 
-            {
-                publishers: publishers,
-                title: title,
-                edition: edition,
-                publishDate: publishDate,
-                pages: pages,
-                description: description,
-                category: category,
-                cover: cover,
-                quantity: Number(quantity)
-            }
-        }
-    ).then(response => 
-    {
-        if(response.modifiedCount > 0){
-            res.json({newObject: response})
-        }
-    })
+    try {
+        const { bookId, publisher, title, edition,
+            publishedDate, pages, description, category, 
+            coverImage, totalNumber
+        } = req.body;
     
-    // .catch(err => res.json({error: SERVER_ERROR}));
+        db.collection('books').updateOne(
+            { _id: new ObjectId(bookId) },
+            { $set: 
+                {
+                    publisher: publisher,
+                    title: title,
+                    edition: edition,
+                    publishedDate: publishedDate,
+                    pages: pages,
+                    description: description,
+                    category: category,
+                    coverImage: coverImage,
+                    totalNumber: Number(totalNumber)
+                }
+            }
+        ).then(response => 
+        {
+            if(response.modifiedCount > 0){
+                res.json({success: 'Book Edited'})
+            }else{res.json({error: 'Something went wrong please try again'})}
+        }).catch(err => res.json({error: errMsg}));
+        
+    } catch (error) {
+        res.json({error: SERVER_ERROR});
+    }
 }
 
 
