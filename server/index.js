@@ -5,7 +5,6 @@ const Origin                       = require('./module/AccessOrigin/Origin')
 
 const ADMINCONTROLLER              = require('./Controller/AdminController/AdminController')
 const MEMBERSCONTROLLER            = require('./Controller/membersController')
-// const BOOKSCONTROLLER              = require('./Controller/BooksController/booksController')
 const BOOKSCONTROLLER = require('./Controller/BooksController/booksController')
 
 const app = express()
@@ -31,10 +30,16 @@ app.use(bodyParser.json())
 
 
 // -------------Admin Route-------------
-app.post('/api/adminLogin', ADMINCONTROLLER.adminAuthentication().login)
-app.post('/api/resetPassword', ADMINCONTROLLER.adminAuthentication().resetPassword)
-app.get('/api/admin/createSession', ADMINCONTROLLER.adminAuthentication().createSession)
-app.get('/api/admin/destroySession', ADMINCONTROLLER.adminAuthentication().destroySession)
+app.post('/api/adminLogin', ADMINCONTROLLER.adminLogin);
+app.post('/api/adminPasswordReset', ADMINCONTROLLER.adminPasswordReset),
+app.get('/api/admin/createSession', ADMINCONTROLLER.InitializeAdminSession),
+
+
+
+// app.post('/api/adminLogin', ADMINCONTROLLER.adminAuthentication().login)
+// app.post('/api/resetPassword', ADMINCONTROLLER.adminAuthentication().resetPassword)
+// app.get('/api/admin/createSession', ADMINCONTROLLER.adminAuthentication().createSession)
+// app.get('/api/admin/destroySession', ADMINCONTROLLER.adminAuthentication().destroySession)
 
 
 // ------------Student Route------------
@@ -51,6 +56,8 @@ app.post('/api/returnBooks', BOOKSCONTROLLER.returnBooks)
 app.get('/api/getAllBooks', BOOKSCONTROLLER.getAllBook)
 app.post('/api/deleteBook', BOOKSCONTROLLER.deleteBook)
 app.post('/api/editBook', BOOKSCONTROLLER.editBook)
+app.post('/api/searchBook', BOOKSCONTROLLER.searchForBooksUsingTitleOrCategory)
+
 
 
 
