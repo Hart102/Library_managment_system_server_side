@@ -1,104 +1,92 @@
 const { upload } = require('../module/FileUploader/uploadFile')
+
+const Database = require("./NewDataBase/DatabaseConnection");
 const { memberRegistrationAuth } = require('../module/Joi/Joi')
-const { db } = require('./NewDataBase/DatabaseConnection')
+const helperFunction = require("../module/Helper/helperFunction");
 
 
-const members = () => {
-    return{
-        // ----------------Register members----------------
-        membersResitration(req, res){ 
-            const { error, value } = memberRegistrationAuth.validate(req.body)
+// Reusable server message 
+const SERVER_ERROR = 'Server Error!'
 
-            if(error){
-                return res.json({error: error})
-            }else{
-                const new_member = { ...value, borrowing_limit: 4, borrowed_books: [] }
-                db.collection('members').insertOne(new_member).then(result => 
-                {
-                    if(result.acknowledged){
-                        res.json({success: 'member registered'})
-                        upload(req, res, (err) => err ? console.log({error: err}) : console.log({success: 'File uploaded'}))//Save profile picture
-                    }else{
-                        res.json({error: 'Something went wrong please try again'})
-                    }
-                })   
+
+const membersRegistration = async (req, res) => 
+{
+    try {
+        let { error, value } = memberRegistrationAuth.validate(req.body);
+        if(error){
+            return res.json({error: error});
+        }else{
+            value = helperFunction.assignKeyValueToObject(value, 'borrowed_books', []);
+            const insertNewMember = await Database.Members_collection.insertOne(value);
+
+            if(insertNewMember.acknowledged){
+                res.json({success: "Member's profile created"});
+                // perform a profile image upload here!
+                // upload(req, res, (err) => err ? console.log({error: err}) : console.log({success: 'File uploaded'}))
+                return
             }
-        },
-
-
-        // -------------------Fetch All members-------------------
-        getAllMembers(req, res){ 
-            db.collection('members').find({}).toArray().then(result => 
-            {
-                if (result.length > 0) return res.json({success: result})
-                res.json({error: "No member registered yet!"})
-            })
-        },
-
-
-        // ---------------Fetch Single member By Registration number---------------
-        getSignleMember(req, res){ 
-            db.collection('members').findOne({RegNo: req.body.RegNo}).then(result => 
-            {
-                if(result) return res.json({success: result})
-                res.json({error: "Member not found"})
-            })
-        },
-
-
-        // ------------------Edit members profile------------------
-        editMembersProfile(req, res){ 
-            const { 
-                FullName, 
-                RegNo, 
-                Department, 
-                College, 
-                YearOfGraduation,
-                Email, 
-                borrowing_limit, 
-                borrowed_books 
-            } = req.body
-
-            db.collection('members').updateOne(
-            { RegNo: RegNo }, 
-            { $set: 
-                { 
-                    FullName: FullName,
-                    RegNo: RegNo,
-                    Department: Department,
-                    College: College,
-                    YearOfGraduation: YearOfGraduation,
-                    Email: Email, 
-                    borrowing_limit: Number(borrowing_limit), 
-                    borrowed_books: [] 
-                } 
-            }).then(result => 
-            {
-                if(result.acknowledged) return res.json({success: "Profile updated"})
-                res.json({error: "Could not update profile, try again!"})
-            })
+            res.json({error: 'Something went wrong please try again'});
         }
+    } catch (error) {
+        res.json({error: SERVER_ERROR});
     }
 }
 
-module.exports = {members}
+
+const getAllMembers = async (req, res) => 
+{
+    try {
+        const members = await Database.Members_collection.find({}).toArray();
+        if(members.length > 0) return res.json({success: members});
+        res.json({error: "No member registered yet!"});
+        
+    } catch (error) {
+        res.json({error: SERVER_ERROR});
+    }
+}
+
+
+const editMembersProfile = async (req, res) => 
+{
+    try {
+        const { 
+            FullName, 
+            RegNo, 
+            Department, 
+            College, 
+            YearOfGraduation,
+            Email, 
+            borrowed_books 
+        } = req.body
+        
+        const EditMemberProfile = await Database.Members_collection.updateOne(
+        { RegNo: RegNo }, 
+        { $set: 
+            { 
+                FullName: FullName,
+                RegNo: RegNo,
+                Department: Department,
+                College: College,
+                YearOfGraduation: YearOfGraduation,
+                Email: Email, 
+                borrowed_books: [] 
+            } 
+        });
+
+        if(EditMemberProfile.modifiedCount > 0){
+            return res.json({success: `${FullName}, your profile have been updated`});
+        }
+        res.json({error: "No new change to be updated in your profile"});
+
+    } catch (error) {
+        res.json({error: SERVER_ERROR});
+    }
+}
 
 
 
-
-
-
-
-
-
-
-
-
-
-// db.collection('members').findOne({FullName: "Goodluck chikanma Nnamdi"}).then(result => {
-//     console.log(result)
-// })
-
-// db.collection('members').deleteMany({}).then(result => {
-//     console.log(result)
-// })
+module.exports = {
+    membersRegistration,
+    getAllMembers,
+    editMembersProfile
+}

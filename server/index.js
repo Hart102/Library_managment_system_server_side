@@ -33,20 +33,21 @@ app.use(bodyParser.json())
 app.post('/api/adminLogin', ADMINCONTROLLER.adminLogin);
 app.post('/api/adminPasswordReset', ADMINCONTROLLER.adminPasswordReset),
 app.get('/api/admin/createSession', ADMINCONTROLLER.InitializeAdminSession),
+app.get('/api/admin/destroySession', ADMINCONTROLLER.destroySession),
+
+
+// ------------Member Route------------
+app.post('/api/membersRegistration', MEMBERSCONTROLLER.membersRegistration);
+app.get('/api/getAllMembers', MEMBERSCONTROLLER.getAllMembers);
+app.post('/api/editMembersProfile', MEMBERSCONTROLLER.editMembersProfile);
 
 
 
-// app.post('/api/adminLogin', ADMINCONTROLLER.adminAuthentication().login)
-// app.post('/api/resetPassword', ADMINCONTROLLER.adminAuthentication().resetPassword)
-// app.get('/api/admin/createSession', ADMINCONTROLLER.adminAuthentication().createSession)
-// app.get('/api/admin/destroySession', ADMINCONTROLLER.adminAuthentication().destroySession)
 
-
-// ------------Student Route------------
-app.post('/api/register', MEMBERSCONTROLLER.members().membersResitration)
-app.get('/api/getAllMembers', MEMBERSCONTROLLER.members().getAllMembers)
-app.get('/api/getSingleMember', MEMBERSCONTROLLER.members().getSignleMember)
-app.post('/api/editMemberProfile', MEMBERSCONTROLLER.members().editMembersProfile)
+// app.post('/api/register', MEMBERSCONTROLLER.members().membersResitration)
+// app.get('/api/getAllMembers', MEMBERSCONTROLLER.members().getAllMembers)
+// app.get('/api/getSingleMember', MEMBERSCONTROLLER.members().getSignleMember)
+// app.post('/api/editMemberProfile', MEMBERSCONTROLLER.members().editMembersProfile)
 
 
 // ---------Book controller Route--------- 

@@ -3,37 +3,7 @@ const Database = require("../NewDataBase/DatabaseConnection");
 const helperFunction = require("../../module/Helper/helperFunction");
 
 
-
-// userId: 646809c89002c9f6314576b0
-// Book Id: 64790191a0add8b7258559b2
-
-
-// class BookObect {
-//     constructor(publishers, title, edition, publishDate, pages, description, category, cover, quantity,) {
-//         this.publishers = publishers
-//         this.title = title
-//         this.edition = edition
-//         this.publishDate = publishDate
-//         this.pages = pages
-//         this.description = description
-//         this.category = category
-//         this.cover = cover
-//         this.quantity = quantity
-//     }
-// }
- 
-// let book = new BookObect(
-//     ['Mr. Kelvin'],
-//     'science',
-//     'An edition of Fantastic Mr Fox (1970)',
-//     'October 1, 1950',
-//     '96',
-//     'The main character of Fantastic Mr. Fox is an extremely clever anthropomorphized fox named Mr. Fox. He lives with his wife and four little foxes. In order to feed his family, he steals food from the cruel, brutish farmers named Boggis, Bunce, and Bean every night.',
-//     'science and technology',
-//     'coverImage.png',
-//     30,
-// )
-
+// Reusable server message 
 const SERVER_ERROR = 'Server Error!'
 
 

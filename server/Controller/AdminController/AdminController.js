@@ -1,6 +1,5 @@
 const { ObjectId } = require('mongodb');
 const { adminAuth } = require('../../module/Joi/Joi');
-const { db } = require('../NewDataBase/DatabaseConnection');
 const Database = require("../NewDataBase/DatabaseConnection");
 
 
@@ -17,8 +16,7 @@ const adminLogin = async (req, res) => // admin loginId = 1234
 
         const admin = await Database.Admin_collection.findOne({ password: value.password });
         if(admin !== null){
-            res.json({success: "Success"});
-            return session = req.session.admin = result;
+            return session = req.session.admin = admin;
         }else{
             res.json({error: 'Invalid credential'});
         }
@@ -49,15 +47,21 @@ const adminPasswordReset = async (req, res) => // Admin LoginId: 64826bcd0997ddf
     }
 }
 
+
 // Session Route 
 const InitializeAdminSession = async (req, res) => 
 {
     try {
-        if(session) {
-            res.json({success: session});
-        }else{
-            res.json({error: 'No session'});
-        }
+        session ? res.json({success: session}) : res.json({error: 'No session'});
+    } catch (error) {
+        res.json({error: SERVER_ERROR});
+    }
+}
+
+const destroySession = (req, res) => 
+{
+    try {
+        req.session.destroy(); return session = '';
     } catch (error) {
         res.json({error: SERVER_ERROR});
     }
@@ -66,30 +70,5 @@ const InitializeAdminSession = async (req, res) =>
 
 module.exports = { 
     adminLogin, adminPasswordReset,
-    InitializeAdminSession
+    InitializeAdminSession, destroySession
 }
-
-
-
-
-
-
-
-
-
-// const adminAuthentication = () => { // admin loginId = 1234
-//     return{
-//       
-
-//         createSession(req, res){ //Admin Session
-//             session ? res.json({success: session}) : res.json({error: 'No session'})
-//         }, 
-
-//         destroySession(req, res){ // Admin Logout Route
-//             res.json({success: "session destroyed"})
-//             req.session.destroy(); return session = '';
-//         },
-//     }
-// }
-
-// module.exports = {adminAuthentication}
