@@ -16,7 +16,7 @@ const memberRegistrationAuth = Joi.object().keys({
 });
 
 const registerBooksAuth = Joi.object().keys({
-    // file: Joi.any().required(),
+    file: Joi.any(),
     id: Joi.any(),
     isbn: Joi.string().required(),
     title: Joi.string().required(),

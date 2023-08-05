@@ -1,10 +1,14 @@
 const fs = require('fs');
 const path = require('path')
 const multer = require('multer')
+const appWriteImageUpload = require('node-appwrite');
 const { ObjectId } = require('mongodb');
 const Database = require("../NewDataBase/DatabaseConnection");
 const helperFunction = require("../../module/Helper/helperFunction");
-const { upload } = require('../../module/FileUploader/uploadFile');
+const {
+    storage,
+    imageUpload
+} = require('../../module/FileUploader/uploadFile');
 const { registerBooksAuth } = require('../../module/Joi/Joi')
 
 // Location of the files to be deleted 
@@ -28,106 +32,131 @@ const getAllBook = async (req, res) => {
 // Book registration route
 const registerBooks = async (req, res) => {
     try {
-        upload(req, res, async (err) => {
-            if (err instanceof multer.MulterError) {
-                return res.status(500).json({ error: err })
+        // Server side validation
+        let { value, error } = registerBooksAuth.validate(req.body)
+        if (error) return res.json({ error: error.message })
 
-            } else if (err) {
-                return res.status(500).json({ error: err })
+        if (req.file) {
+            const img = req.file
+            //Rename image and remove spaces if the name is greater than 20
+            const imageId =
+                img.originalname.replace(/[^a-z^A-Z]/g, "").length > 20 ?
+                    img.originalname.replace(/[^a-z^A-Z]/g, "").slice(0, 20) :
+                    img.originalname.replace(/[^a-z^A-Z]/g, "")
 
-            } else {
-                let { value, error } = registerBooksAuth.validate(req.body)
-                if (error) return res.json({ error: error.message })
+            // Upload image to appwrite
+            const promise =
+                await storage
+                    .createFile("booksUpload", imageId, appWriteImageUpload.InputFile
+                        .fromBuffer(img.buffer, img.originalname))
 
-                /* Add file name to identify the cover image meant for each book
-                This will be used in the frontend to display books */
-                if (req.file) {
-                    value = { ...value, filename: req.file.filename, count: 0, id: Math.random() }
-                    const insertBook = await Database.Book_collection.insertOne(value);
-                    if (insertBook.acknowledged) {
-                        return res.json({
-                            success: 'Book successfully registered.'
-                        });
-                    }
+            if (promise.chunksUploaded == 1) {
 
-                    res.json({
-                        error: 'Book not registered try again!'
+                req.body = { ...req.body, filename: promise.$id, count: 0, id: Math.random() }
+                const insertBook = await Database.Book_collection.insertOne(req.body)
+
+                if (insertBook.acknowledged) {
+                    return res.json({
+                        success: 'Book successfully registered.'
                     });
                 }
+
+                res.json({
+                    error: 'Book not registered try again!'
+                });
             }
-        })
+        }
 
     } catch (error) {
         res.json({ error: SERVER_ERROR });
     }
 }
 
+
+
+
+
 // update book 
 const editBook = async (req, res) => {
     try {
-        upload(req, res, (err) => {
-            if (err instanceof multer.MulterError) {
-                return res.status(500).json({ error: err })
 
-            } else if (err) {
-                return res.status(500).json({ error: err })
+        // Validation
+        let { value, error } = registerBooksAuth.validate(req.body)
+        if (error) return res.json({ error: error.message })
 
-            } else {
-                // Validation
-                let { value, error } = registerBooksAuth.validate(req.body)
-                if (error) return res.json({ error: error.message })
-                    
 
-                const {
-                    id, isbn, title, pages, length, author, edition,
-                    subject, publisher, totalBooks, description
-                } = req.body;
+        if (req.file) {
+            const img = req.file
+            //Rename image and remove spaces if the name is greater than 20
+            const imageId =
+                img.originalname.replace(/[^a-z^A-Z]/g, "").length > 20 ?
+                    img.originalname.replace(/[^a-z^A-Z]/g, "").slice(0, 20) :
+                    img.originalname.replace(/[^a-z^A-Z]/g, "")
 
-                // Update Record in the database 
-                const updateBook = Database.Book_collection.updateOne(
-                    { id: Number(id) },
-                    {
-                        $set: {
-                            isbn: isbn,
-                            pages: pages,
-                            title: title,
-                            author: author,
-                            length: length,
-                            edition: edition,
-                            subject: subject,
-                            publisher: publisher,
-                            totalBooks: totalBooks,
-                            description: description,
-                            filename: req.file.filename,
-                        }
+            // Delete image from appwrite
+            // return console.log(req.body.oldFileNamereq.body.oldFileName)
+            // const promise = await storage.updateFile("booksUpload", imageId, req.body.oldFileName);
+            // return console.log(promise)
+
+
+            const promise =
+                await storage
+                    .updateFile("booksUpload", req.body.oldFileName, appWriteImageUpload.InputFile
+                        .fromBuffer(img.buffer, img.originalname))
+
+
+            const {
+                id, isbn, title, pages, length, author, edition,
+                subject, publisher, totalBooks, description
+            } = req.body;
+
+            // Update Record in the database 
+            const updateBook = Database.Book_collection.updateOne(
+                { id: Number(id) },
+                {
+                    $set: {
+                        isbn: isbn,
+                        pages: pages,
+                        title: title,
+                        author: author,
+                        length: length,
+                        edition: edition,
+                        subject: subject,
+                        publisher: publisher,
+                        totalBooks: totalBooks,
+                        description: description,
+                        filename: req.file.filename,
                     }
-                )
+                }
+            )
+        }
 
-                // Deleting any file related to the book that is updated, which has already been replaced 
-                updateBook.then((response) => {
-                    // If user provides a new image then replace the old one
-                    if (response.modifiedCount > 0) {
-                        fs.readdir(location, (err, files) => {
-                            if (err) return console.log(err);
-                            files.forEach(file => {
-                                if (file === req.body.oldFileName) {
-                                    fs.unlink(`${location}/${req.body.oldFileName}`, (err) => {
-                                        if (err) return console.log(err)
-                                        return res.json({ success: 'Update successful' })
-                                    })
-                                }
-                            });
-                        });
-                    }
 
-                })
+        // Deleting any file related to the book that is updated, which has already been replaced 
+        // updateBook.then((response) => {
+        //     // If user provides a new image then replace the old one
+        //     if (response.modifiedCount > 0) {
+        //         fs.readdir(location, (err, files) => {
+        //             if (err) return console.log(err);
+        //             files.forEach(file => {
+        //                 if (file === req.body.oldFileName) {
+        //                     fs.unlink(`${location}/${req.body.oldFileName}`, (err) => {
+        //                         if (err) return console.log(err)
+        //                         return res.json({ success: 'Update successful' })
+        //                     })
+        //                 }
+        //             });
+        //         });
+        //     }
 
-            }
-        })
+        // })
+
+
 
 
     } catch (error) {
         res.json({ error: SERVER_ERROR });
+        console.log(error)
     }
 }
 
@@ -166,7 +195,6 @@ const deleteBook = async (req, res) => {
 
 /*
     LEND OR BORROW BOOK FUNCTION
-    FEATURES:
     1) This route check if the a member have gotten to his/her borrowing limit
     before it borrows book to members. 
     2) Check if member already have the requested book in his/her custody.
@@ -293,3 +321,73 @@ module.exports = {
     editBook,
     searchForBooksUsingTitleOrCategory,
 }
+
+
+
+// const editBook = async (req, res) => {
+//     try {
+//         upload(req, res, (err) => {
+//             if (err instanceof multer.MulterError) {
+//                 return res.status(500).json({ error: err })
+
+//             } else if (err) {
+//                 return res.status(500).json({ error: err })
+
+//             } else {
+//                 // Validation
+//                 let { value, error } = registerBooksAuth.validate(req.body)
+//                 if (error) return res.json({ error: error.message })
+
+
+//                 const {
+//                     id, isbn, title, pages, length, author, edition,
+//                     subject, publisher, totalBooks, description
+//                 } = req.body;
+
+//                 // Update Record in the database 
+//                 const updateBook = Database.Book_collection.updateOne(
+//                     { id: Number(id) },
+//                     {
+//                         $set: {
+//                             isbn: isbn,
+//                             pages: pages,
+//                             title: title,
+//                             author: author,
+//                             length: length,
+//                             edition: edition,
+//                             subject: subject,
+//                             publisher: publisher,
+//                             totalBooks: totalBooks,
+//                             description: description,
+//                             filename: req.file.filename,
+//                         }
+//                     }
+//                 )
+
+//                 // Deleting any file related to the book that is updated, which has already been replaced 
+//                 updateBook.then((response) => {
+//                     // If user provides a new image then replace the old one
+//                     if (response.modifiedCount > 0) {
+//                         fs.readdir(location, (err, files) => {
+//                             if (err) return console.log(err);
+//                             files.forEach(file => {
+//                                 if (file === req.body.oldFileName) {
+//                                     fs.unlink(`${location}/${req.body.oldFileName}`, (err) => {
+//                                         if (err) return console.log(err)
+//                                         return res.json({ success: 'Update successful' })
+//                                     })
+//                                 }
+//                             });
+//                         });
+//                     }
+
+//                 })
+
+//             }
+//         })
+
+
+//     } catch (error) {
+//         res.json({ error: SERVER_ERROR });
+//     }
+// }
