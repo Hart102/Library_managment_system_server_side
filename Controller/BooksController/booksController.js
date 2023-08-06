@@ -1,18 +1,11 @@
-const fs = require('fs');
-const path = require('path')
-const multer = require('multer')
 const appWriteImageUpload = require('node-appwrite');
 const { ObjectId } = require('mongodb');
 const Database = require("../NewDataBase/DatabaseConnection");
 const helperFunction = require("../../module/Helper/helperFunction");
-const {
-    storage,
-    imageUpload
-} = require('../../module/FileUploader/uploadFile');
+const { storage } = require('../../module/FileUploader/uploadFile');
 const { registerBooksAuth } = require('../../module/Joi/Joi')
 
-// Location of the files to be deleted 
-const location = path.join(__dirname, '../../../library_system/public/uploads');
+
 
 // Reusable server message 
 const SERVER_ERROR = 'Network timeout, please try again!'
@@ -73,9 +66,6 @@ const registerBooks = async (req, res) => {
 }
 
 
-
-
-
 // update book 
 const editBook = async (req, res) => {
     try {
@@ -84,34 +74,43 @@ const editBook = async (req, res) => {
         let { value, error } = registerBooksAuth.validate(req.body)
         if (error) return res.json({ error: error.message })
 
-
         if (req.file) {
+
             const img = req.file
-            //Rename image and remove spaces if the name is greater than 20
+
+            //  Rename image and remove spaces if the name is greater than 20
+
             const imageId =
                 img.originalname.replace(/[^a-z^A-Z]/g, "").length > 20 ?
                     img.originalname.replace(/[^a-z^A-Z]/g, "").slice(0, 20) :
                     img.originalname.replace(/[^a-z^A-Z]/g, "")
 
-            // Delete image from appwrite
-            // return console.log(req.body.oldFileNamereq.body.oldFileName)
-            // const promise = await storage.updateFile("booksUpload", imageId, req.body.oldFileName);
-            // return console.log(promise)
 
+            // If delete image is successful, replace the deleted image with the provided image
 
-            const promise =
+            const replaceImage =
                 await storage
-                    .updateFile("booksUpload", req.body.oldFileName, appWriteImageUpload.InputFile
+                    .createFile("booksUpload", imageId, appWriteImageUpload.InputFile
                         .fromBuffer(img.buffer, img.originalname))
 
 
+
+            // If replace image is successful, update record in mongodb database
             const {
-                id, isbn, title, pages, length, author, edition,
-                subject, publisher, totalBooks, description
+                id,
+                isbn,
+                title,
+                pages,
+                length,
+                author,
+                edition,
+                subject,
+                publisher,
+                totalBooks,
+                description
             } = req.body;
 
-            // Update Record in the database 
-            const updateBook = Database.Book_collection.updateOne(
+            const updateBook = await Database.Book_collection.updateOne(
                 { id: Number(id) },
                 {
                     $set: {
@@ -125,71 +124,60 @@ const editBook = async (req, res) => {
                         publisher: publisher,
                         totalBooks: totalBooks,
                         description: description,
-                        filename: req.file.filename,
+                        filename: replaceImage.$id,
                     }
                 }
             )
+
+            if (updateBook.modifiedCount > 0) {
+
+                res.json({ success: 'Update successful' })
+
+                storage.listFiles("booksUpload").then((response) => {
+
+                    if (response.files.length > 0) {
+                        for (let i = 0; i < response.files.length; i++) {
+                            storage.deleteFile("booksUpload", req.body.oldFileName)
+                        }
+                    }
+                }).catch ((error) =>  {
+                    console.log(error.toString())
+                })
+
+            }
+
         }
 
-
-        // Deleting any file related to the book that is updated, which has already been replaced 
-        // updateBook.then((response) => {
-        //     // If user provides a new image then replace the old one
-        //     if (response.modifiedCount > 0) {
-        //         fs.readdir(location, (err, files) => {
-        //             if (err) return console.log(err);
-        //             files.forEach(file => {
-        //                 if (file === req.body.oldFileName) {
-        //                     fs.unlink(`${location}/${req.body.oldFileName}`, (err) => {
-        //                         if (err) return console.log(err)
-        //                         return res.json({ success: 'Update successful' })
-        //                     })
-        //                 }
-        //             });
-        //         });
-        //     }
-
-        // })
-
-
-
-
     } catch (error) {
-        res.json({ error: SERVER_ERROR });
-        console.log(error)
+        res.json({'error': error.toString()})
+        // res.json({ error: SERVER_ERROR });
+        console.log(error.toString())
     }
 }
+
 
 // Delete book from database
 const deleteBook = async (req, res) => {
     try {
-        const { id, filename } = req.body
-        const response =
-            await Database.Book_collection.deleteOne({ id: Number(id) })
-        if (response.deletedCount > 0) {
-            // delete image from directory if record is deleted from the database 
-            fs.readdir(location, (err, files) => {
-                if (err) return console.log(err);
+        const { id, filename } = req.body;
 
-                files.forEach(file => {
-                    if (file === filename) {
-                        fs.unlink(`${location}/${filename}`, (err) => {
-                            if (err) return console.log(err)
-                            return res.json({ success: "Book deleted" })
-                        })
-                    }
-                });
-            });
+        const deleteImage = await storage.listFiles("booksUpload")
+        if (deleteImage.files.length > 0) {
+            for (let i = 0; i < deleteImage.files.length; i++) {
+                storage.deleteFile("booksUpload", filename)
+            }
+
+            const response = await Database.Book_collection.deleteOne({ id: Number(id) })
+            if (response.deletedCount > 0) {
+                return res.json({ success: "Book deleted" })
+            }
         }
 
     } catch (error) {
         res.json({ error: SERVER_ERROR })
+        console.log(error)
     }
 }
-
-
-
-
 
 
 
@@ -321,73 +309,3 @@ module.exports = {
     editBook,
     searchForBooksUsingTitleOrCategory,
 }
-
-
-
-// const editBook = async (req, res) => {
-//     try {
-//         upload(req, res, (err) => {
-//             if (err instanceof multer.MulterError) {
-//                 return res.status(500).json({ error: err })
-
-//             } else if (err) {
-//                 return res.status(500).json({ error: err })
-
-//             } else {
-//                 // Validation
-//                 let { value, error } = registerBooksAuth.validate(req.body)
-//                 if (error) return res.json({ error: error.message })
-
-
-//                 const {
-//                     id, isbn, title, pages, length, author, edition,
-//                     subject, publisher, totalBooks, description
-//                 } = req.body;
-
-//                 // Update Record in the database 
-//                 const updateBook = Database.Book_collection.updateOne(
-//                     { id: Number(id) },
-//                     {
-//                         $set: {
-//                             isbn: isbn,
-//                             pages: pages,
-//                             title: title,
-//                             author: author,
-//                             length: length,
-//                             edition: edition,
-//                             subject: subject,
-//                             publisher: publisher,
-//                             totalBooks: totalBooks,
-//                             description: description,
-//                             filename: req.file.filename,
-//                         }
-//                     }
-//                 )
-
-//                 // Deleting any file related to the book that is updated, which has already been replaced 
-//                 updateBook.then((response) => {
-//                     // If user provides a new image then replace the old one
-//                     if (response.modifiedCount > 0) {
-//                         fs.readdir(location, (err, files) => {
-//                             if (err) return console.log(err);
-//                             files.forEach(file => {
-//                                 if (file === req.body.oldFileName) {
-//                                     fs.unlink(`${location}/${req.body.oldFileName}`, (err) => {
-//                                         if (err) return console.log(err)
-//                                         return res.json({ success: 'Update successful' })
-//                                     })
-//                                 }
-//                             });
-//                         });
-//                     }
-
-//                 })
-
-//             }
-//         })
-
-
-//     } catch (error) {
-//         res.json({ error: SERVER_ERROR });
-//     }
-// }

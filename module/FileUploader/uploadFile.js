@@ -18,7 +18,6 @@ const imageUpload = multer({ storage: Upload })
 // -------------------------------------
 
 module.exports = {
-    uploadApiKey,
     storage,
     imageUpload
 }

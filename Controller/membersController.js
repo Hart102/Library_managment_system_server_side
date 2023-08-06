@@ -21,38 +21,30 @@ const getAllMembers = async (req, res) => {
 }
 
 // Register member 
-const membersRegistration = (req, res) => {
+const membersRegistration = async (req, res) => {
     try {
-        upload(req, res, async (err) => {
-            if (err instanceof multer.MulterError) {
-                return res.status(500).json({ error: err })
 
-            } else if (err) {
-                return res.status(500).json({ error: err })
+        let { error, value } = memberRegistrationAuth.validate(req.body);
+        if (error) {
+            return res.json({ error: error.message });
+
+        } else {
+            delete value.id
+            value = { ...value, books: [] }
+            const insertNewMember = await Database.Members_collection.insertOne(value)
+
+            if (insertNewMember.acknowledged) {
+                res.json({
+                    success: "Member's profile created successfully"
+                });
 
             } else {
-                let { error, value } = memberRegistrationAuth.validate(req.body);
-                if (error) {
-                    return res.json({ error: error.message });
-
-                } else {
-                    delete value.id
-                    value = { ...value, books: [] }
-                    const insertNewMember = await Database.Members_collection.insertOne(value)
-
-                    if (insertNewMember.acknowledged) {
-                        res.json({
-                            success: "Member's profile created successfully"
-                        });
-
-                    } else {
-                        res.json({
-                            error: 'Registration number already exist'
-                        });
-                    }
-                }
+                res.json({
+                    error: 'Registration number already exist'
+                });
             }
-        })
+        }
+
     } catch (error) {
         res.json({ error: NETWORK_ERROR });
     }
@@ -62,41 +54,35 @@ const membersRegistration = (req, res) => {
 const editMembersProfile = async (req, res) => {
     try {
 
-        upload(req, res, async (err) => {
-            if (err instanceof multer.MulterError) {
-                return res.status(500).json({ error: err })
+        if (req.body) {
 
-            } else if (err) {
-                return res.status(500).json({ error: err })
-
-            } else {
-                const { id, Profile, RegNo, Email, College, FullName, Department, YearOfAdmission } = req.body;
-                const updateProfile = await Database.Members_collection.updateOne(
-                    { _id: new ObjectId(id) },
+            const { id, Profile, RegNo, Email, College, FullName, Department, YearOfAdmission } = req.body;
+            const updateProfile = await Database.Members_collection.updateOne(
+                { _id: new ObjectId(id) },
+                {
+                    $set:
                     {
-                        $set:
-                        {
-                            RegNo: RegNo,
-                            Email: Email,
-                            Profile: Profile,
-                            College: College,
-                            FullName: FullName,
-                            Department: Department,
-                            YearOfAdmission: YearOfAdmission
-                        }
+                        RegNo: RegNo,
+                        Email: Email,
+                        Profile: Profile,
+                        College: College,
+                        FullName: FullName,
+                        Department: Department,
+                        YearOfAdmission: YearOfAdmission
                     }
-                )
-
-                if (updateProfile.modifiedCount > 0) {
-                    return res.json({
-                        success: "profile updated"
-                    });
                 }
-                res.json({
-                    error: "No new changes to apply"
+            )
+
+            if (updateProfile.modifiedCount > 0) {
+                return res.json({
+                    success: "profile updated"
                 });
             }
-        })
+            res.json({
+                error: "No new changes to apply"
+            });
+        }
+
     } catch (error) {
         res.json({ error: NETWORK_ERROR });
     }
