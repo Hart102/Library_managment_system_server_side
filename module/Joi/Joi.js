@@ -1,7 +1,7 @@
 const Joi = require('joi')
 
 const adminAuth = Joi.object().keys({
-    password: Joi.string().required()
+    password: Joi.any().required()
 })
 
 const memberRegistrationAuth = Joi.object().keys({

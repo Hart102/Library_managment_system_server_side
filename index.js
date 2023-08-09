@@ -3,13 +3,11 @@ const bodyParser = require('body-parser')
 const session = require('express-session')
 const cors = require('cors');
 require('dotenv').config();
-const appWriteImageUpload = require('node-appwrite');
-const multer = require('multer')
 const { imageUpload } = require('./module/FileUploader/uploadFile');
 
-const ADMINCONTROLLER = require('./Controller/AdminController/AdminController')
+const ADMINCONTROLLER = require('./Controller/AdminController')
 const MEMBERSCONTROLLER = require('./Controller/membersController')
-const BOOKSCONTROLLER = require('./Controller/BooksController/booksController');
+const BOOKSCONTROLLER = require('./Controller/booksController');
 
 
 
@@ -35,6 +33,8 @@ app.use(cors({
     origin: '*'
 }));
 app.use(express.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.json())
 
 
 // -------------Admin Route-------------

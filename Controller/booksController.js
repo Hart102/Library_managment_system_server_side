@@ -1,9 +1,9 @@
 const appWriteImageUpload = require('node-appwrite');
 const { ObjectId } = require('mongodb');
-const Database = require("../NewDataBase/DatabaseConnection");
-const helperFunction = require("../../module/Helper/helperFunction");
-const { storage } = require('../../module/FileUploader/uploadFile');
-const { registerBooksAuth } = require('../../module/Joi/Joi')
+const Database = require("./DatabaseConnection");
+const helperFunction = require("../module/Helper/helperFunction");
+const { storage } = require('../module/FileUploader/uploadFile');
+const { registerBooksAuth } = require('../module/Joi/Joi')
 
 
 
@@ -69,7 +69,6 @@ const registerBooks = async (req, res) => {
 // update book 
 const editBook = async (req, res) => {
     try {
-
         // Validation
         let { value, error } = registerBooksAuth.validate(req.body)
         if (error) return res.json({ error: error.message })
@@ -78,22 +77,21 @@ const editBook = async (req, res) => {
 
             const img = req.file
 
-            //  Rename image and remove spaces if the name is greater than 20
+            // Delete Previous Image 
+            storage.deleteFile("booksUpload", req.body.oldFileName)
 
+            //  Rename image and remove spaces if the name is greater than 20
             const imageId =
                 img.originalname.replace(/[^a-z^A-Z]/g, "").length > 20 ?
                     img.originalname.replace(/[^a-z^A-Z]/g, "").slice(0, 20) :
                     img.originalname.replace(/[^a-z^A-Z]/g, "")
 
 
-            // If delete image is successful, replace the deleted image with the provided image
-
+            // Replace the deleted image with the provided image
             const replaceImage =
                 await storage
                     .createFile("booksUpload", imageId, appWriteImageUpload.InputFile
                         .fromBuffer(img.buffer, img.originalname))
-
-
 
             // If replace image is successful, update record in mongodb database
             const {
@@ -133,16 +131,16 @@ const editBook = async (req, res) => {
 
                 res.json({ success: 'Update successful' })
 
-                storage.listFiles("booksUpload").then((response) => {
+                // storage.listFilestorage.listFiles("booksUpload").then((response) => {
 
-                    if (response.files.length > 0) {
-                        for (let i = 0; i < response.files.length; i++) {
-                            storage.deleteFile("booksUpload", req.body.oldFileName)
-                        }
-                    }
-                }).catch ((error) =>  {
-                    console.log(error.toString())
-                })
+                //     if (response.files.length > 0) {
+                //         for (let i = 0; i < response.files.length; i++) {
+                            // storage.deleteFile("booksUpload", req.body.oldFileName)
+                //         }
+                //     }
+                // }).catch ((error) =>  {
+                //     console.log(error.toString())
+                // })
 
             }
 

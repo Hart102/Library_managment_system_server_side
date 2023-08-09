@@ -2,7 +2,7 @@ const multer = require('multer')
 const { ObjectId } = require('mongodb');
 const { upload } = require('../module/FileUploader/uploadFile')
 
-const Database = require("./NewDataBase/DatabaseConnection");
+const Database = require("./DatabaseConnection");
 const { memberRegistrationAuth } = require('../module/Joi/Joi')
 
 

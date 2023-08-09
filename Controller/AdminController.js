@@ -1,6 +1,6 @@
 const { ObjectId } = require('mongodb');
-const { adminAuth } = require('../../module/Joi/Joi');
-const Database = require("../NewDataBase/DatabaseConnection");
+const { adminAuth } = require('../module/Joi/Joi');
+const Database = require("./DatabaseConnection");
 
 
 
@@ -16,12 +16,14 @@ const adminLogin = async (req, res) => // admin loginId = 1234
 
         const admin = await Database.Admin_collection.findOne({ password: value.password });
         if (admin !== null) {
-            return session = req.session.admin = admin;
+            res.json({success: admin._id})
+            return session = req.session.admin = admin._id;
         } else {
             res.json({ error: 'Invalid password' });
         }
     } catch (error) {
         res.json({ error: SERVER_ERROR });
+        console.log(error)
     }
 }
 
@@ -58,7 +60,8 @@ const adminPasswordReset = async (req, res) => // Admin LoginId: 64826bcd0997ddf
 
 const destroySession = (req, res) => {
     try {
-        req.session.destroy(); return session = '';
+        req.session.destroy(); session = '';
+        res.json({success: "Success"})
     } catch (error) {
         res.json({ error: SERVER_ERROR });
     }
