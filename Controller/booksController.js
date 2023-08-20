@@ -131,17 +131,6 @@ const editBook = async (req, res) => {
 
                 res.json({ success: 'Update successful' })
 
-                // storage.listFilestorage.listFiles("booksUpload").then((response) => {
-
-                //     if (response.files.length > 0) {
-                //         for (let i = 0; i < response.files.length; i++) {
-                            // storage.deleteFile("booksUpload", req.body.oldFileName)
-                //         }
-                //     }
-                // }).catch ((error) =>  {
-                //     console.log(error.toString())
-                // })
-
             }
 
         }
